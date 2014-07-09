@@ -12,6 +12,7 @@ if(debug && exists("mergedData")){
 
 # libs
 library(RCurl)
+library(reshape)
 
 
 # data
@@ -134,6 +135,17 @@ subSetKeyColumns <- union(keyColumns, c("activity_name"))
 # 4. Appropriately labels the data set with descriptive variable names. 
 reshapedData <- melt(subSetMergedData, subSetKeyColumns)
 
-variableList <- strsplit(gsub("^((f|t)(Body|BodyBody|Gravity)(Gyro|Acc|Body)[\\-]*(Jerk)?(Mag)?[\\-]*(mean|std)[\\(\\)\\-]*(X|Y|Z)?)", "\\2|\\3|\\4|\\5|\\6|\\7|\\8|\\1", subSetMergedData$variable), "\\|")
+# split the variable into parts (list of char vectors) and reshape it into a data frame and add it to reshapedData
+variableList <- strsplit(gsub("^((f|t)(Body|BodyBody|Gravity)(Gyro|Acc|Body)[\\-]*(Jerk)?(Mag)?[\\-]*(mean|std)[\\(\\)\\-]*(X|Y|Z)?)", "\\2|\\3|\\4|\\5|\\6|\\7|\\8|\\1", reshapedData$variable), "\\|")
+nrows <- length(variableList)
+ncols <- length(unlist(variableList[1]))
+variableUnlist <- unlist(variableList)
+variableMatrix <- matrix(variableUnlist, nrow=nrows, ncol=ncols, byrow=TRUE)
+variableData <- as.data.frame(variableMatrix)
+variableData$V8 <- NULL
+names(variableData) <- c("time_frequency", "source","acceleration_gyro","jerk", "magnitude","method","axis")
+reshapedData <- cbind(reshapedData, variableData)
 
 # 5. Creates a second, independent tidy data set with the average of each variable for each activity and each subject. 
+
+
