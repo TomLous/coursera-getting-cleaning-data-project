@@ -51,15 +51,20 @@ if(!exists("featureColumns")){
   featureColumns <<- c()
 }
 
+codebook("## Actions performed on data:")
+
 # create path
+codebook("* create data dir `",dataPath,"`")
 if(!file.exists(dataPath)){
   log("create path: `",dataPath,"`")
   dir.create(dataPath)
 }
 
+
 # download .zip file if not exists
 if(debug){file.remove(filePath)}
 
+codebook("* downloading zip file: `",fileUrl,"` to `",dataPath,"`")
 if(!file.exists(targetZipFilePath)){
   log("downloading zip file: `",fileUrl,"`")
   binaryData <- getBinaryURL(fileUrl, ssl.verifypeer=FALSE, followlocation=TRUE) 
@@ -74,6 +79,7 @@ if(!file.exists(targetZipFilePath)){
 
 # unzip if not already exists
 extractedZipPath <- file.path(dataPath, zipDir)
+codebook("* extracting zip file: `",extractedZipPath,"` to `",dataPath,"`")
 if(!file.exists(extractedZipPath) || debug){
   log("unzip file: `",targetZipFilePath, "` to `",dataPath,"`")
   unzip(targetZipFilePath, exdir=dataPath, overwrite=TRUE)
@@ -87,6 +93,7 @@ dirList <- list.files(extractedZipPath, recursive=TRUE)
 # load all train & test .txt files into memory: ignoring the 'Inertial Signals' folders
 sanitizedDirList <- dirList[!grepl("Inertial", dirList) & grepl("test|train", dirList)]
 
+codebook("* merging all *_test.txt and *_train.txt files into one dataset: `mergedData`")
 if(!exists("mergedData") || debug){
   log("load .txt files:")
   for(dataFile in sanitizedDirList){
@@ -153,7 +160,7 @@ if(!exists("mergedData") || debug){
   log("[#1] Merges the training and the test sets to create one data set.")
   log("\t - `mergedData` already loaded in memory: ", nrow(mergedData)," x ",ncol(mergedData))
 }
-
+codebook("* `mergedData` loaded in memory, dimensions: ", nrow(mergedData)," x ",ncol(mergedData))
 
 
 
@@ -163,7 +170,7 @@ log("[#2] Extracts only the measurements on the mean and standard deviation for 
 meanStdFeatureColumns <- featureColumns[grepl("(mean|std)\\(\\)",featureColumns)]
 subSetColumns <- union(keyColumns, meanStdFeatureColumns)
 subSetMergedData <- mergedData[,subSetColumns]
-
+codebook("* subsetted `mergedData` into `subSetMergedData` keeping only the key columns and features containing `std` or `mean`, dimensions : ", nrow(subSetMergedData)," x ",ncol(subSetMergedData))
 
 
 # 3. Uses descriptive activity names to name the activities in the data set
@@ -174,10 +181,12 @@ names(activitiesData) <- c("activity_num", "activity_name")
 
 subSetMergedData <- merge(subSetMergedData, activitiesData, by="activity_num", all.x=TRUE)
 subSetKeyColumns <- union(keyColumns, c("activity_name"))
+codebook("* merged `",activitiesFile,"` contents with correct `activity_num` column, effectivly appending `activity_name` to `subSetMergedData`, dimensions : ", nrow(subSetMergedData)," x ",ncol(subSetMergedData))
 
 # 4. Appropriately labels the data set with descriptive variable names. 
 log("[#4] Appropriately labels the data set with descriptive variable names. ")
 reshapedData <- melt(subSetMergedData, subSetKeyColumns)
+codebook("* melt `subSetMergedData` into `reshapedData`, based on key columns, dimensions : ", nrow(reshapedData)," x ",ncol(reshapedData))
 
 # split the variable into parts (list of char vectors) and reshape it into a data frame and add it to reshapedData
 variableList <- strsplit(gsub("^((f|t)(Body|BodyBody|Gravity)(Gyro|Acc|Body)[\\-]*(Jerk)?(Mag)?[\\-]*(mean|std)[\\(\\)\\-]*(X|Y|Z)?)", "\\2|\\3|\\4|\\5|\\6|\\7|\\8|\\1", reshapedData$variable), "\\|")
@@ -193,19 +202,30 @@ rm(variableList)
 rm(variableUnlist)
 rm(variableMatrix)
 rm(variableData)
+codebook("* split feature column `variable` into 7 seperate colums (for each sub feature), and added it to `reshapedData`, dimensions : ", nrow(reshapedData)," x ",ncol(reshapedData))
+
 
 resultData <- reshapedData
 rm(reshapedData)
+codebook("* renamed `reshapedData` to `resultData`")
 log("variable `resultData` available for use : ", nrow(resultData)," x ",ncol(resultData))
-codebook("## `reshapedData` variable\n")
-codebook("### key columns\n")
-codebook("* `subject`\n* `activity_name`\n* `activity_num`")
+
 
 # 5. Creates a second, independent tidy data set with the average of each variable for each activity and each subject. 
 log("[#5] Appropriately labels the data set with descriptive variable names. ")
 tidyData <- dcast(resultData, activity_name + subject ~ variable, mean)
 log("variable `tidyData` available for use ", nrow(tidyData)," x ",ncol(tidyData))
+codebook("* cast `resultData` into `tidyData` with the average of each variable for each activity and each subject dimensions :", nrow(tidyData)," x ",ncol(tidyData))
 
 log("Writing `tidyData` to `",targetResultFilePath,"`")
+codebook("* write `tidyData` to file  `",targetResultFilePath,"`")
 write.table(tidyData, targetResultFilePath, row.names = FALSE, quote = FALSE,col.names = TRUE)
+
+
+
+# writing variable properties
+
+codebook("## `reshapedData` variable\n")
+codebook("### key columns\n")
+codebook("* `subject`\n* `activity_name`\n* `activity_num`")
 
