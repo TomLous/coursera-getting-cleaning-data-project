@@ -260,7 +260,7 @@ codebook("Variable name       | Description")
 codebook("--------------------|------------")
 tidyDataCols <- names(tidyData)[3:68]
 for(tdc in tidyDataCols){
-  codebook("`",tdc,"`   | the average value for this feature, num (range: -1:1) )")
+  codebook("`",tdc,"`   | the average value for this feature, num (range: -1:1)")
 }
 
 
