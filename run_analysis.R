@@ -64,7 +64,7 @@ if(!file.exists(dataPath)){
 # download .zip file if not exists
 if(debug){file.remove(filePath)}
 
-codebook("* downloading zip file: `",fileUrl,"` to `",dataPath,"`")
+codebook("* downloading zip file: [",fileUrl,"](",fileUrl,") to `",dataPath,"`")
 if(!file.exists(targetZipFilePath)){
   log("downloading zip file: `",fileUrl,"`")
   binaryData <- getBinaryURL(fileUrl, ssl.verifypeer=FALSE, followlocation=TRUE) 
@@ -79,7 +79,7 @@ if(!file.exists(targetZipFilePath)){
 
 # unzip if not already exists
 extractedZipPath <- file.path(dataPath, zipDir)
-codebook("* extracting zip file: `",extractedZipPath,"` to `",dataPath,"`")
+codebook("* extracting zip file: `",targetZipFilePath,"` to `",extractedZipPath,"`")
 if(!file.exists(extractedZipPath) || debug){
   log("unzip file: `",targetZipFilePath, "` to `",dataPath,"`")
   unzip(targetZipFilePath, exdir=dataPath, overwrite=TRUE)
@@ -196,7 +196,7 @@ variableUnlist <- unlist(variableList)
 variableMatrix <- matrix(variableUnlist, nrow=nrows, ncol=ncols, byrow=TRUE)
 variableData <- as.data.frame(variableMatrix)
 variableData$V8 <- NULL
-names(variableData) <- c("time_frequency", "source","acceleration_gyro","jerk", "magnitude","method","axis")
+names(variableData) <- c("dimension", "source","type","jerk", "magnitude","method","axis")
 reshapedData <- cbind(reshapedData, variableData)
 rm(variableList)
 rm(variableUnlist)
@@ -207,7 +207,7 @@ codebook("* split feature column `variable` into 7 seperate colums (for each sub
 
 resultData <- reshapedData
 rm(reshapedData)
-codebook("* renamed `reshapedData` to `resultData`")
+codebook("* renamed `reshapedData` to **`resultData`**")
 log("variable `resultData` available for use : ", nrow(resultData)," x ",ncol(resultData))
 
 
@@ -215,7 +215,7 @@ log("variable `resultData` available for use : ", nrow(resultData)," x ",ncol(re
 log("[#5] Appropriately labels the data set with descriptive variable names. ")
 tidyData <- dcast(resultData, activity_name + subject ~ variable, mean)
 log("variable `tidyData` available for use ", nrow(tidyData)," x ",ncol(tidyData))
-codebook("* cast `resultData` into `tidyData` with the average of each variable for each activity and each subject dimensions :", nrow(tidyData)," x ",ncol(tidyData))
+codebook("* cast `resultData` into **`tidyData`** with the average of each variable for each activity and each subject dimensions :", nrow(tidyData)," x ",ncol(tidyData))
 
 log("Writing `tidyData` to `",targetResultFilePath,"`")
 codebook("* write `tidyData` to file  `",targetResultFilePath,"`")
@@ -224,8 +224,43 @@ write.table(tidyData, targetResultFilePath, row.names = FALSE, quote = FALSE,col
 
 
 # writing variable properties
-
-codebook("## `reshapedData` variable\n")
+codebook("") 
+codebook("## `resultData` variable\n")
 codebook("### key columns\n")
-codebook("* `subject`\n* `activity_name`\n* `activity_num`")
+codebook("Variable name       | Description")
+codebook("--------------------|------------")
+codebook("`subject`           | ID of subject, int (1-30)")
+codebook("`activity_num`      | ID of activity, int (1-6)")
+codebook("`activity_name`     | Label of activity, Factor w/ 6 levels")
+
+codebook("### non-key columns\n")
+codebook("Variable name       | Description")
+codebook("--------------------|------------")
+codebook("`variable`          | comlete name of the feature, Factor w/ 66 levels (eg. tBodyAcc-mean()-X) ")
+codebook("`value`             | the actual value, num (range: -1:1)")
+codebook("`dimension`         | dimension of measurement, Factor w/ 2 levels: `t` (Time) or `f` (Frequency)")
+codebook("`source`            | source of measurement, Factor w/ 3 levels: `Body`,`BodyBody` or `Gravity`")
+codebook("`type`              | type of measurement, Factor w/ 2 levels: `Acc` (accelerometer) or `Gyro` (gyroscope)")
+codebook("`jerk`              | is 'Jerk' signal , Factor w/ 2 levels:  `Jerk` or `` (non Jerk)")
+codebook("`magnitude`         | is 'Magnitude' value , Factor w/ 2 levels:  `Mag` or `` (non Mag)")
+codebook("`method`            | result from method , Factor w/ 2 levels:  `mean` (average) or `std` (standard deviation)")
+codebook("`axis`              | FFT exrapolated to axis , Factor w/ 2 levels:  `` (no FFT-axis) or `X`, `Y` or `Z`")
+
+codebook("") 
+codebook("## `tidyData` variable\n")
+codebook("### key columns\n")
+codebook("Variable name       | Description")
+codebook("--------------------|------------")
+codebook("`activity_name`     | Label of activity, Factor w/ 6 levels")
+codebook("`subject`           | ID of subject, int (1-30)")
+
+
+codebook("### non-key columns\n")
+codebook("Variable name       | Description")
+codebook("--------------------|------------")
+tidyDataCols <- names(tidyData)[3:68]
+for(tdc in tidyDataCols){
+  codebook("`",tdc,"`   | the average value for this feature, num (range: -1:1) )")
+}
+
 
