@@ -1,1 +1,7 @@
 data/
+
+.RDataTmp
+
+.Rhistory
+
+.RData
